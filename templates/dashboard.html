@@ -1,0 +1,93 @@
+<!-- templates/dashboard.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard — HydroScan</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <style>
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .kpi-card  { display: flex; flex-direction: column; gap: 8px; }
+    .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+    .kpi-icon  { font-size: 20px; margin-bottom: 4px; }
+    .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .chart-wrap  { position: relative; height: 200px; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-brand" style="display:flex; align-items:center; gap:10px;">
+  <svg width="22" height="25" viewBox="0 0 52 58" fill="none">
+    <rect x="14" y="4"  width="24" height="36" rx="5" fill="rgba(0,212,255,0.06)" stroke="#00d4ff" stroke-width="1.3"/>
+    <rect x="18" y="7"  width="16" height="7"  rx="2.5" fill="rgba(0,212,255,0.15)" stroke="#00d4ff" stroke-width="0.9"/>
+    <line x1="26" y1="14" x2="26" y2="21" stroke="#00d4ff" stroke-width="1.1" opacity=".55"/>
+    <circle cx="26" cy="26" r="5.5" fill="rgba(0,212,255,0.18)" stroke="#00d4ff" stroke-width="1.2"/>
+    <circle cx="26" cy="26" r="2" fill="#00d4ff"/>
+    <line x1="26" y1="31.5" x2="26" y2="37" stroke="#00d4ff" stroke-width="1.1" opacity=".55"/>
+    <rect x="18" y="37" width="16" height="7" rx="2.5" fill="rgba(255,179,0,0.14)" stroke="#ffb300" stroke-width="0.9"/>
+    <line x1="14" y1="26" x2="6"  y2="26" stroke="#00d4ff" stroke-width="1" stroke-dasharray="2 2" opacity=".5"/>
+    <line x1="38" y1="26" x2="46" y2="26" stroke="#00d4ff" stroke-width="1" stroke-dasharray="2 2" opacity=".5"/>
+    <rect x="10" y="44" width="32" height="10" rx="3" fill="rgba(255,179,0,0.08)" stroke="#ffb300" stroke-width=".9"/>
+  </svg>
+  HydroScan
+</div>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div id="offline-banner" class="offline-banner">⚠ Recherche de connexion...</div>
+      <span class="badge-live" id="status-badge">Réacteur Live</span>
+      <span class="nav-clock mono" id="clock">--:--:--</span>
+    </div>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <a href="/dashboard"   class="nav-item active">📊 Dashboard</a>
+    <a href="/historique"  class="nav-item">📜 Historique</a>
+    <a href="/alertes"     class="nav-item">🔔 Alertes</a>
+    <a href="/settings"    class="nav-item">⚙ Paramètres</a>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="card kpi-card fade-in">
+        <div class="kpi-icon">🌡</div>
+        <div class="kpi-label">Température</div>
+        <div><span class="kpi-value mono" id="val-temp">---</span><span class="kpi-unit">°C</span></div>
+      </div>
+      <div class="card kpi-card fade-in" style="animation-delay:0.08s">
+        <div class="kpi-icon">🔵</div>
+        <div class="kpi-label">Pression H₂</div>
+        <div><span class="kpi-value mono" id="val-pression">---</span><span class="kpi-unit">bar</span></div>
+      </div>
+      <div class="card kpi-card fade-in" style="animation-delay:0.16s">
+        <div class="kpi-icon">💧</div>
+        <div class="kpi-label">Débit huile</div>
+        <div><span class="kpi-value mono" id="val-debit">---</span><span class="kpi-unit">Nm³/h</span></div>
+      </div>
+      <div class="card kpi-card fade-in" style="animation-delay:0.24s">
+        <div class="kpi-icon">⚡</div>
+        <div class="kpi-label">Conversion</div>
+        <div><span class="kpi-value mono" id="val-conversion">---</span><span class="kpi-unit">%</span></div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="card"><div class="kpi-label" style="margin-bottom:12px">Température (°C)</div><div class="chart-wrap"><canvas id="chart-temp"></canvas></div></div>
+      <div class="card"><div class="kpi-label" style="margin-bottom:12px">Pression H₂ (bar)</div><div class="chart-wrap"><canvas id="chart-pression"></canvas></div></div>
+      <div class="card"><div class="kpi-label" style="margin-bottom:12px">Débit (Nm³/h)</div><div class="chart-wrap"><canvas id="chart-debit"></canvas></div></div>
+      <div class="card"><div class="kpi-label" style="margin-bottom:12px">Taux de conversion (%)</div><div class="chart-wrap"><canvas id="chart-conversion"></canvas></div></div>
+    </div>
+
+  </main>
+
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

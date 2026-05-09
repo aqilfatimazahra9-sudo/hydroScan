@@ -1,0 +1,20 @@
+<main class="main-content">
+  <h2 style="margin-bottom:20px; font-size:18px;">Alertes du réacteur</h2>
+  <div id="alert-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+</main>
+<script src="/static/js/api.js"></script>
+<script>
+  async function loadAlerts() {
+    const alerts = await API.getAlerts();
+    const container = document.getElementById('alert-list');
+    container.innerHTML = alerts.reverse().map(a => `
+      <div class="card" style="display:flex; align-items:center; gap:14px;">
+        <span class="badge-${a.type}">${a.type.toUpperCase()}</span>
+        <span class="mono" style="color:var(--text-muted); font-size:12px;">${a.timestamp}</span>
+        <span>${a.message}</span>
+      </div>
+    `).join('');
+  }
+  loadAlerts();
+  setInterval(loadAlerts, 5000);
+</script>

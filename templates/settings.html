@@ -1,0 +1,29 @@
+<main class="main-content">
+  <h2 style="margin-bottom:20px;">Paramètres & Export</h2>
+  <div class="card" style="max-width:500px; margin-bottom:20px;">
+    <div class="kpi-label" style="margin-bottom:16px;">Seuils d'alertes</div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label style="color:var(--text-muted); font-size:12px;">Température max (°C)</label>
+      <input type="number" id="th-temp" class="form-control" placeholder="200">
+    </div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label style="color:var(--text-muted); font-size:12px;">Pression max (bar)</label>
+      <input type="number" id="th-pression" class="form-control" placeholder="50">
+    </div>
+    <button class="btn btn-primary" onclick="saveThresholds()">Enregistrer</button>
+  </div>
+  <div style="display:flex; gap:12px;">
+    <button class="btn btn-outline" onclick="API.exportCSV()">⬇ Export CSV</button>
+    <button class="btn btn-outline" onclick="API.exportPDF()">⬇ Export PDF</button>
+  </div>
+</main>
+<script src="/static/js/api.js"></script>
+<script>
+  async function saveThresholds() {
+    const ok = await API.updateThresholds({
+      temp_max: +document.getElementById('th-temp').value,
+      pression_max: +document.getElementById('th-pression').value
+    });
+    alert(ok ? '✅ Seuils mis à jour !' : '❌ Erreur serveur');
+  }
+</script>

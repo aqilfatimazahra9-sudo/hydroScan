@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historique — HydroScan</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
+  <style>
+    /* ─── Variables globales (même que style.css) ─── */
+    :root {
+      --bg-primary:    #1a1d20;
+      --bg-card:       #212529;
+      --accent-cyan:   #00d4ff;
+      --accent-amber:  #ffb300;
+      --accent-danger: #ff4d4d;
+      --accent-green:  #00e676;
+      --text-primary:  #e8eaed;
+      --text-muted:    #9aa0a6;
+      --border:        rgba(255,255,255,0.08);
+      --shadow:        0 4px 20px rgba(0,0,0,0.4);
+      --radius:        12px;
+      --transition:    0.3s ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    /* ─── Navbar ─── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(26,29,32,0.94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 24px; height: 60px;
+      justify-content: space-between;
+    }
+    .nav-brand { font-size: 16px; font-weight: 600; color: var(--accent-cyan); letter-spacing: 0.5px; }
+    .nav-clock { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-muted); }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      position: fixed; left: 0; top: 60px; bottom: 0;
+      width: 220px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      padding: 20px 12px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: 8px;
+      color: var(--text-muted); text-decoration: none;
+      transition: all var(--transition); font-size: 14px;
+    }
+    .nav-item:hover { background: rgba(0,212,255,0.08); color: var(--accent-cyan); }
+    .nav-item.active { background: rgba(0,212,255,0.10); color: var(--accent-cyan); font-weight: 500; }
+    .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+    /* ─── Main ─── */
+    .main-content {
+      margin-left: 220px;
+      margin-top: 60px;
+      padding: 28px;
+      min-height: calc(100vh - 60px);
+    }
+
+    /* ─── Page header ─── */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .page-title { font-size: 20px; font-weight: 600; }
+    .page-title span { color: var(--accent-cyan); }
+
+    /* ─── Stats rapides ─── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 14px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 8px; }
+    .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 600; color: var(--accent-cyan); }
+    .stat-sub   { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ─── Filtres ─── */
+    .filter-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 6px; }
+    .filter-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+    .filter-input {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: border-color var(--transition);
+      min-width: 160px;
+    }
+    .filter-input:focus { border-color: var(--accent-cyan); }
+
+    /* Colorize date inputs (webkit) */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.6) sepia(1) saturate(3) hue-rotate(170deg);
+      cursor: pointer;
+    }
+
+    .select-input {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      min-width: 150px;
+      transition: border-color var(--transition);
+    }
+    .select-input:focus { border-color: var(--accent-cyan); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 18px; border-radius: 8px; border: none;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all var(--transition); white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent-cyan); color: #0a0c0f; }
+    .btn-primary:hover { background: #33ddff; box-shadow: 0 0 16px rgba(0,212,255,0.25); }
+    .btn-outline { background: transparent; color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+    .btn-danger-outline { background: transparent; color: var(--accent-danger); border: 1px solid rgba(255,77,77,0.3); }
+    .btn-danger-outline:hover { background: rgba(255,77,77,0.08); }
+
+    /* ─── Table wrapper ─── */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    /* ─── DataTables override ─── */
+    .dataTables_wrapper {
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Search & Length */
+    .dataTables_filter input,
+    .dataTables_length select {
+      background: var(--bg-primary) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text-primary) !important;
+      border-radius: 8px !important;
+      padding: 6px 10px !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 12px !important;
+      outline: none !important;
+    }
+    .dataTables_filter input:focus,
+    .dataTables_length select:focus { border-color: var(--accent-cyan) !important; }
+    .dataTables_filter label,
+    .dataTables_length label { color: var(--text-muted); font-size: 12px; }
+
+    /* Table itself */
+    table.dataTable {
+      border-collapse: collapse !important;
+      width: 100% !important;
+      margin: 16px 0 !important;
+    }
+    table.dataTable thead th {
+      background: rgba(0,212,255,0.05) !important;
+      color: var(--text-muted) !important;
+      font-size: 11px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.8px !important;
+      padding: 12px 14px !important;
+      border-bottom: 1px solid var(--border) !important;
+      border-top: none !important;
+      font-weight: 500 !important;
+    }
+    table.dataTable thead th.sorting::after,
+    table.dataTable thead th.sorting_asc::after,
+    table.dataTable thead th.sorting_desc::after {
+      color: var(--accent-cyan) !important;
+    }
+    table.dataTable tbody td {
+      padding: 11px 14px !important;
+      border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 12px !important;
+      color: var(--text-primary) !important;
+      vertical-align: middle !important;
+    }
+    table.dataTable tbody tr:hover td {
+      background: rgba(0,212,255,0.04) !important;
+    }
+    table.dataTable tbody tr:last-child td { border-bottom: none !important; }
+
+    /* Pagination */
+    .dataTables_paginate .paginate_button {
+      background: transparent !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text-muted) !important;
+      border-radius: 6px !important;
+      margin: 0 2px !important;
+      padding: 5px 10px !important;
+      font-size: 12px !important;
+      cursor: pointer !important;
+      transition: all 0.2s !important;
+    }
+    .dataTables_paginate .paginate_button:hover {
+      background: rgba(0,212,255,0.1) !important;
+      border-color: var(--accent-cyan) !important;
+      color: var(--accent-cyan) !important;
+    }
+    .dataTables_paginate .paginate_button.current {
+      background: var(--accent-cyan) !important;
+      border-color: var(--accent-cyan) !important;
+      color: #0a0c0f !important;
+      font-weight: 600 !important;
+    }
+    .dataTables_info { color: var(--text-muted) !important; font-size: 12px !important; }
+
+    /* ─── Badges dans la table ─── */
+    .badge {
+      display: inline-block;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 500;
+    }
+    .badge-normal  { background: rgba(0,230,118,0.12); color: var(--accent-green); border: 1px solid rgba(0,230,118,0.25); }
+    .badge-warning { background: rgba(255,179,0,0.12); color: var(--accent-amber);  border: 1px solid rgba(255,179,0,0.25); }
+    .badge-danger  { background: rgba(255,77,77,0.12);  color: var(--accent-danger); border: 1px solid rgba(255,77,77,0.25); }
+
+    /* ─── Huile dot ─── */
+    .oil-dot {
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .oil-dot::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .oil-soja::before     { background: #00d4ff; }
+    .oil-tournesol::before { background: #ffb300; }
+    .oil-palme::before    { background: #ff6b6b; }
+
+    /* ─── Barre de chargement ─── */
+    #loading-bar {
+      display: none;
+      height: 2px; background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+      border-radius: 2px; margin-bottom: 12px;
+      animation: slide 1.2s ease infinite;
+    }
+    @keyframes slide {
+      from { background-position: -200px 0; }
+      to   { background-position: 200px 0; }
+    }
+
+    /* ─── Export buttons ─── */
+    .export-group { display: flex; gap: 10px; margin-left: auto; }
+
+    /* ─── No results ─── */
+    .no-data {
+      text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px;
+    }
+    .no-data .icon { font-size: 32px; display: block; margin-bottom: 10px; opacity: 0.4; }
+
+    /* ─── Animations ─── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 1100px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════ NAVBAR ═══════════════ -->
+  <nav class="navbar">
+    <div class="nav-brand" style="display:flex; align-items:center; gap:10px;">
+      <svg width="22" height="25" viewBox="0 0 52 58" fill="none">
+        <rect x="14" y="4"  width="24" height="36" rx="5" fill="rgba(0,212,255,0.06)" stroke="#00d4ff" stroke-width="1.3"/>
+        <rect x="18" y="7"  width="16" height="7"  rx="2.5" fill="rgba(0,212,255,0.15)" stroke="#00d4ff" stroke-width="0.9"/>
+        <line x1="26" y1="14" x2="26" y2="21" stroke="#00d4ff" stroke-width="1.1" opacity=".55"/>
+        <circle cx="26" cy="26" r="5.5" fill="rgba(0,212,255,0.18)" stroke="#00d4ff" stroke-width="1.2"/>
+        <circle cx="26" cy="26" r="2" fill="#00d4ff"/>
+        <line x1="26" y1="31.5" x2="26" y2="37" stroke="#00d4ff" stroke-width="1.1" opacity=".55"/>
+        <rect x="18" y="37" width="16" height="7" rx="2.5" fill="rgba(255,179,0,0.14)" stroke="#ffb300" stroke-width="0.9"/>
+        <line x1="14" y1="26" x2="6"  y2="26" stroke="#00d4ff" stroke-width="1" stroke-dasharray="2 2" opacity=".5"/>
+        <line x1="38" y1="26" x2="46" y2="26" stroke="#00d4ff" stroke-width="1" stroke-dasharray="2 2" opacity=".5"/>
+        <rect x="10" y="44" width="32" height="10" rx="3" fill="rgba(255,179,0,0.08)" stroke="#ffb300" stroke-width=".9"/>
+      </svg>
+      HydroScan
+    </div>
+    <div style="display:flex; align-items:center; gap:20px;">
+      <span style="font-size:12px; color:var(--text-muted);">
+        Usine de raffinage — Hydrogénation continue
+      </span>
+      <span class="nav-clock" id="clock">--:--:--</span>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <nav class="sidebar">
+    <a href="/dashboard"  class="nav-item"><span class="icon">📊</span> Dashboard</a>
+    <a href="/historique" class="nav-item active"><span class="icon">📜</span> Historique</a>
+    <a href="/alertes"    class="nav-item"><span class="icon">🔔</span> Alertes</a>
+    <a href="/settings"   class="nav-item"><span class="icon">⚙</span> Paramètres</a>
+  </nav>
+
+  <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+  <main class="main-content fade-in">
+
+    <!-- En-tête page -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Historique des <span>lots de production</span></h1>
+        <p style="color:var(--text-muted); font-size:13px; margin-top:4px;">
+          Consultez et filtrez l'historique complet des batches d'hydrogénation
+        </p>
+      </div>
+      <div class="export-group">
+        <button class="btn btn-outline" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="btn btn-primary" onclick="exportPDF()">⬇ Export PDF</button>
+      </div>
+    </div>
+
+    <!-- Stats rapides (recalculées après filtrage) -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Lots affichés</div>
+        <div class="stat-value" id="stat-count">0</div>
+        <div class="stat-sub">batches filtrés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Temp. moyenne</div>
+        <div class="stat-value" id="stat-temp">—</div>
+        <div class="stat-sub">°C sur période</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pression moy.</div>
+        <div class="stat-value" id="stat-pression">—</div>
+        <div class="stat-sub">bar sur période</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Taux conv. moy.</div>
+        <div class="stat-value" id="stat-conversion">—</div>
+        <div class="stat-sub">% sur période</div>
+      </div>
+    </div>
+
+    <!-- ─── Barre de filtres ─── -->
+    <div class="filter-bar">
+
+      <div class="filter-group">
+        <span class="filter-label">Date début</span>
+        <input type="date" id="filter-date-start" class="filter-input">
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Date fin</span>
+        <input type="date" id="filter-date-end" class="filter-input">
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Type d'huile</span>
+        <select id="filter-huile" class="select-input">
+          <option value="">— Toutes —</option>
+          <option value="Soja">Soja</option>
+          <option value="Tournesol">Tournesol</option>
+          <option value="Palme">Palme</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Statut</span>
+        <select id="filter-statut" class="select-input">
+          <option value="">— Tous —</option>
+          <option value="Normal">Normal</option>
+          <option value="Warning">Warning</option>
+          <option value="Critique">Critique</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" onclick="applyFilters()">🔍 Filtrer</button>
+      <button class="btn btn-danger-outline" onclick="resetFilters()">✕ Réinitialiser</button>
+    </div>
+
+    <!-- ─── Tableau ─── -->
+    <div class="table-card">
+      <div id="loading-bar"></div>
+
+      <table id="history-table" class="dataTable" style="width:100%">
+        <thead>
+          <tr>
+            <th>Batch ID</th>
+            <th>Date / Heure</th>
+            <th>Huile</th>
+            <th>Temp. (°C)</th>
+            <th>Pression (bar)</th>
+            <th>Débit (Nm³/h)</th>
+            <th>Conversion (%)</th>
+            <th>Durée (min)</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Rempli dynamiquement -->
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- jQuery + DataTables -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+  <script>
+    // ═══════════════════════════════════════════════
+    //  DONNÉES SIMULÉES
+    //  Remplace cette fonction par un vrai fetch()
+    //  quand le backend de Personne 1 est prêt :
+    //
+    //  async function fetchHistory(params) {
+    //    const url = '/api/history?' + new URLSearchParams(params);
+    //    const res = await fetch(url);
+    //    return res.ok ? res.json() : [];
+    //  }
+    // ═══════════════════════════════════════════════
+
+    const HUILES = ['Soja', 'Tournesol', 'Palme'];
+    const STATUTS = ['Normal', 'Normal', 'Normal', 'Warning', 'Critique'];
+
+    function generateFakeData(n = 120) {
+      const data = [];
+      const now = new Date();
+      for (let i = 0; i < n; i++) {
+        const d = new Date(now - i * 15 * 60 * 1000); // un batch toutes les 15 min
+        const huile = HUILES[Math.floor(Math.random() * HUILES.length)];
+        const temp = +(160 + Math.random() * 50).toFixed(1);
+        const pression = +(30 + Math.random() * 25).toFixed(2);
+        const debit = +(80 + Math.random() * 40).toFixed(1);
+        const conversion = +(75 + Math.random() * 20).toFixed(1);
+
+        // Statut basé sur des règles réelles
+        let statut = 'Normal';
+        if (temp > 200 || pression > 50) statut = 'Critique';
+        else if (temp > 185 || pression > 42) statut = 'Warning';
+
+        data.push({
+          batch_id: `B-${String(1000 + i).padStart(4, '0')}`,
+          datetime: d.toISOString(),
+          huile,
+          temperature: temp,
+          pression,
+          debit,
+          conversion,
+          duree: Math.floor(10 + Math.random() * 20),
+          statut
+        });
+      }
+      return data;
+    }
+
+    // ─── État global ───
+    let allData = generateFakeData(120);
+    let dtInstance = null;
+
+    // ─── Badges ───
+    function statutBadge(s) {
+      const cls = s === 'Normal' ? 'badge-normal' : s === 'Warning' ? 'badge-warning' : 'badge-danger';
+      return `<span class="badge ${cls}">${s}</span>`;
+    }
+    function huileDot(h) {
+      const cls = h === 'Soja' ? 'oil-soja' : h === 'Tournesol' ? 'oil-tournesol' : 'oil-palme';
+      return `<span class="oil-dot ${cls}">${h}</span>`;
+    }
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ─── Mettre à jour les stats en haut ───
+    function updateStats(rows) {
+      if (!rows.length) {
+        document.getElementById('stat-count').textContent = '0';
+        document.getElementById('stat-temp').textContent = '—';
+        document.getElementById('stat-pression').textContent = '—';
+        document.getElementById('stat-conversion').textContent = '—';
+        return;
+      }
+      const avg = key => (rows.reduce((s, r) => s + r[key], 0) / rows.length).toFixed(1);
+      document.getElementById('stat-count').textContent = rows.length;
+      document.getElementById('stat-temp').textContent = avg('temperature');
+      document.getElementById('stat-pression').textContent = avg('pression');
+      document.getElementById('stat-conversion').textContent = avg('conversion');
+    }
+
+    // ─── Remplir le tableau ───
+    function renderTable(rows) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="9"><div class="no-data"><span class="icon">📭</span>Aucun lot trouvé pour ces critères.</div></td></tr>`;
+        return;
+      }
+
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="color:var(--accent-cyan); font-weight:600;">${r.batch_id}</td>
+          <td style="color:var(--text-muted);">${formatDate(r.datetime)}</td>
+          <td>${huileDot(r.huile)}</td>
+          <td>${r.temperature}</td>
+          <td>${r.pression}</td>
+          <td>${r.debit}</td>
+          <td>${r.conversion}</td>
+          <td>${r.duree}</td>
+          <td>${statutBadge(r.statut)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ─── Initialiser DataTables ───
+    function initDT() {
+      if (dtInstance) { dtInstance.destroy(); }
+      dtInstance = $('#history-table').DataTable({
+        pageLength: 20,
+        lengthMenu: [10, 20, 50, 100],
+        order: [[1, 'desc']],
+        language: {
+          search:          'Recherche rapide :',
+          lengthMenu:      'Afficher _MENU_ lignes',
+          info:            'Lignes _START_ à _END_ sur _TOTAL_',
+          infoEmpty:       'Aucune donnée',
+          infoFiltered:    '(filtrée sur _MAX_ total)',
+          paginate: {
+            first:    '«',
+            last:     '»',
+            next:     '›',
+            previous: '‹'
+          },
+          emptyTable:  'Aucun enregistrement',
+          zeroRecords: 'Aucun résultat'
+        },
+        columnDefs: [
+          { targets: [3, 4, 5, 6, 7], className: 'dt-right' }
+        ]
+      });
+    }
+
+    // ─── Filtrage par date + huile + statut ───
+    function applyFilters() {
+      const bar = document.getElementById('loading-bar');
+      bar.style.display = 'block';
+
+      setTimeout(() => {
+        const dateStart  = document.getElementById('filter-date-start').value;
+        const dateEnd    = document.getElementById('filter-date-end').value;
+        const huile      = document.getElementById('filter-huile').value;
+        const statut     = document.getElementById('filter-statut').value;
+
+        let filtered = allData.filter(r => {
+          const rDate = r.datetime.slice(0, 10);
+          if (dateStart && rDate < dateStart) return false;
+          if (dateEnd   && rDate > dateEnd)   return false;
+          if (huile  && r.huile  !== huile)   return false;
+          if (statut && r.statut !== statut)  return false;
+          return true;
+        });
+
+        renderTable(filtered);
+        initDT();
+        updateStats(filtered);
+        bar.style.display = 'none';
+      }, 200); // petit délai pour voir la barre de chargement
+    }
+
+    function resetFilters() {
+      document.getElementById('filter-date-start').value = '';
+      document.getElementById('filter-date-end').value   = '';
+      document.getElementById('filter-huile').value      = '';
+      document.getElementById('filter-statut').value     = '';
+      renderTable(allData);
+      initDT();
+      updateStats(allData);
+    }
+
+    // ─── Export ───
+    // Quand le backend est prêt, remplace par :
+    // function exportCSV() { window.location.href = '/api/export/csv'; }
+    // function exportPDF() { window.location.href = '/api/export/pdf'; }
+    function exportCSV() {
+      const visible = dtInstance
+        ? allData.slice(0, dtInstance.page.len())
+        : allData;
+      const headers = ['Batch ID','Date','Huile','Temp','Pression','Debit','Conversion','Duree','Statut'];
+      const rows = allData.map(r =>
+        [r.batch_id, formatDate(r.datetime), r.huile, r.temperature, r.pression, r.debit, r.conversion, r.duree, r.statut].join(',')
+      );
+      const blob = new Blob([[headers.join(','), ...rows].join('\n')], { type: 'text/csv' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'historique_hydroscan.csv'; a.click();
+    }
+    function exportPDF() {
+      // Appel vers le backend de Personne 1
+      window.location.href = '/api/export/pdf';
+    }
+
+    // ─── Horloge ───
+    setInterval(() => {
+      document.getElementById('clock').textContent =
+        new Date().toLocaleTimeString('fr-FR');
+    }, 1000);
+
+    // ─── Init au chargement ───
+    window.addEventListener('DOMContentLoaded', () => {
+      // Dates par défaut : 30 derniers jours
+      const today = new Date().toISOString().slice(0, 10);
+      const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+      document.getElementById('filter-date-start').value = monthAgo;
+      document.getElementById('filter-date-end').value   = today;
+
+      renderTable(allData);
+      initDT();
+      updateStats(allData);
+    });
+  </script>
+</body>
+</html>
