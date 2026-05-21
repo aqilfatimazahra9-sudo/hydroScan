@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alertes - HydroScan</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .page-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      color: var(--accent-cyan);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .page-title {
+      font-size: 26px;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .page-sub {
+      color: var(--text-muted);
+      max-width: 820px;
+    }
+
+    .head-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .alert-overview {
+      display: grid;
+      grid-template-columns: minmax(280px, 1.2fr) repeat(4, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .status-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 145px;
+      background: linear-gradient(135deg, rgba(0,212,255,.1), rgba(255,255,255,.02));
+    }
+
+    .status-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .status-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .status-text {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,230,118,.28);
+      background: rgba(0,230,118,.1);
+      color: var(--accent-green);
+      padding: 6px 11px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .status-chip::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-chip.danger {
+      color: var(--accent-danger);
+      border-color: rgba(255,77,77,.32);
+      background: rgba(255,77,77,.11);
+    }
+
+    .status-chip.warning {
+      color: var(--accent-amber);
+      border-color: rgba(255,179,0,.3);
+      background: rgba(255,179,0,.1);
+    }
+
+    .status-meta {
+      display: flex;
+      gap: 16px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .stat-card {
+      min-height: 145px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .9px;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1;
+      margin-top: 14px;
+    }
+
+    .stat-note {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .danger-text { color: var(--accent-danger); }
+    .warning-text { color: var(--accent-amber); }
+    .ok-text { color: var(--accent-green); }
+    .cyan-text { color: var(--accent-cyan); }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .side-card {
+      position: sticky;
+      top: 82px;
+    }
+
+    .section-label {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .filters {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .filter-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .report-box {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .report-help {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.65;
+      margin-bottom: 12px;
+    }
+
+    .batch-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 250px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .batch-item {
+      width: 100%;
+      text-align: left;
+      color: var(--text-primary);
+      background: rgba(255,255,255,.025);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 8px;
+      padding: 11px;
+      cursor: pointer;
+    }
+
+    .batch-item:hover,
+    .batch-item.active {
+      border-color: rgba(0,212,255,.42);
+      background: rgba(0,212,255,.08);
+    }
+
+    .batch-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .batch-meta {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .table-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .table-title {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .table-sub {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .alert-table-wrap {
+      overflow: auto;
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 8px;
+    }
+
+    .alert-table td {
+      vertical-align: top;
+    }
+
+    .alert-row-danger td {
+      background: rgba(255,77,77,.035);
+    }
+
+    .alert-row-warning td {
+      background: rgba(255,179,0,.025);
+    }
+
+    .primary-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 150px;
+    }
+
+    .primary-main {
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+    }
+
+    .primary-sub {
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .level-badge,
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .level-danger {
+      color: var(--accent-danger);
+      background: rgba(255,77,77,.12);
+      border: 1px solid rgba(255,77,77,.34);
+    }
+
+    .level-warning {
+      color: var(--accent-amber);
+      background: rgba(255,179,0,.12);
+      border: 1px solid rgba(255,179,0,.3);
+    }
+
+    .status-open {
+      color: var(--accent-amber);
+      background: rgba(255,179,0,.1);
+      border: 1px solid rgba(255,179,0,.26);
+    }
+
+    .status-resolved {
+      color: var(--accent-green);
+      background: rgba(0,230,118,.1);
+      border: 1px solid rgba(0,230,118,.28);
+    }
+
+    .measure-cell {
+      min-width: 135px;
+    }
+
+    .measure-main {
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+    }
+
+    .measure-sub {
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .message-cell {
+      min-width: 260px;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif !important;
+      line-height: 1.55;
+    }
+
+    .btn-small {
+      border-radius: 8px;
+      padding: 7px 11px;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      color: var(--text-muted);
+      padding: 32px;
+      text-align: center;
+    }
+
+    @media (max-width: 1250px) {
+      .alert-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .workspace { grid-template-columns: 1fr; }
+      .side-card { position: static; }
+    }
+
+    @media (max-width: 760px) {
+      .page-head,
+      .table-card-head { flex-direction: column; align-items: stretch; }
+      .head-actions,
+      .search-row,
+      .filter-row,
+      .filter-actions { grid-template-columns: 1fr; display: grid; }
+      .alert-overview { grid-template-columns: 1fr; }
+      .head-actions .btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">HydroScan</div>
+    <div class="nav-clock mono" id="clock">--:--:--</div>
+  </nav>
+
+  <nav class="sidebar">
+    <a href="/dashboard" class="nav-item">Dashboard</a>
+    <a href="/historique" class="nav-item">Historique</a>
+    <a href="/alertes" class="nav-item active">Alertes</a>
+    <a href="/settings" class="nav-item">Parametres</a>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Supervision des incidents</div>
+        <h1 class="page-title">Alertes du reacteur</h1>
+        <p class="page-sub">Suivez les depassements de seuils, traitez les alertes et exportez les rapports par reaction ou selon les filtres actifs.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn btn-outline" onclick="refreshAll()">Actualiser</button>
+        <a class="btn btn-outline" id="csv-link" href="/api/export/alerts/csv" target="_blank">Exporter CSV</a>
+        <a class="btn btn-primary" id="pdf-link" href="/api/export/alerts/pdf" target="_blank">Exporter PDF</a>
+      </div>
+    </div>
+
+    <section class="alert-overview">
+      <div class="card status-panel">
+        <div class="status-top">
+          <div>
+            <div class="status-title" id="status-title">Etat alertes</div>
+            <div class="status-text" id="status-text">Chargement des donnees de supervision...</div>
+          </div>
+          <div class="status-chip" id="status-chip">Stable</div>
+        </div>
+        <div class="status-meta">
+          <span id="last-refresh">Maj --:--:--</span>
+          <span>Limite affichage: 500</span>
+        </div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-label">Affichees</div>
+        <div>
+          <div class="stat-value cyan-text" id="stat-total">0</div>
+          <div class="stat-note">apres filtres</div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Danger</div>
+        <div>
+          <div class="stat-value danger-text" id="stat-danger">0</div>
+          <div class="stat-note">priorite haute</div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Warning</div>
+        <div>
+          <div class="stat-value warning-text" id="stat-warning">0</div>
+          <div class="stat-note">a surveiller</div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Traitees</div>
+        <div>
+          <div class="stat-value ok-text" id="stat-resolved">0</div>
+          <div class="stat-note">resolue = 1</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <aside class="card side-card">
+        <div class="section-label">Filtres</div>
+        <div class="filters">
+          <select class="form-control" id="filter-session" onchange="loadAlerts()">
+            <option value="">Toutes les reactions</option>
+          </select>
+          <div class="filter-row">
+            <select class="form-control" id="filter-level" onchange="loadAlerts()">
+              <option value="">Tous niveaux</option>
+              <option value="danger">Danger</option>
+              <option value="warning">Warning</option>
+            </select>
+            <select class="form-control" id="filter-status" onchange="loadAlerts()">
+              <option value="">Tous statuts</option>
+              <option value="open">Non traitees</option>
+              <option value="resolved">Traitees</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <input class="form-control" type="date" id="filter-date-start" onchange="loadAlerts()">
+            <input class="form-control" type="date" id="filter-date-end" onchange="loadAlerts()">
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-outline" onclick="resetFilters()">Reinitialiser</button>
+            <button class="btn btn-primary" onclick="resolveVisible()">Traiter visibles</button>
+          </div>
+        </div>
+
+        <div class="report-box">
+          <div class="section-label">Rapports par reaction</div>
+          <p class="report-help">Selectionnez une reaction dans la liste. Les boutons CSV/PDF exporteront alors tout le batch selectionne.</p>
+          <div class="batch-list" id="batch-list">
+            <div class="empty-state">Chargement...</div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="table-card-head">
+          <div>
+            <h2 class="table-title">Journal des alertes</h2>
+            <p class="table-sub" id="table-sub">Les alertes sont chargees depuis la base de donnees.</p>
+          </div>
+          <div class="status-chip warning" id="open-count-chip">0 non traitees</div>
+        </div>
+
+        <div class="search-row">
+          <input class="form-control" id="filter-search" placeholder="Rechercher: huile, parametre, message, reaction..." oninput="renderAlerts()">
+          <button class="btn btn-outline" onclick="clearSearch()">Effacer recherche</button>
+        </div>
+
+        <div class="alert-table-wrap">
+          <table class="table-custom alert-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Reaction</th>
+                <th>Niveau</th>
+                <th>Parametre</th>
+                <th>Valeur / seuil</th>
+                <th>Message</th>
+                <th>Traitement</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="alert-body">
+              <tr><td colspan="8"><div class="empty-state">Chargement...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    let allAlerts = [];
+    let visibleAlerts = [];
+    let sessions = [];
+
+    function updateClock() {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    function fmtDate(value) {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value || '--';
+      return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function fmtNumber(value) {
+      if (value === null || value === undefined || value === '') return '--';
+      const number = Number(value);
+      if (Number.isNaN(number)) return value;
+      return number.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+    }
+
+    function levelBadge(level) {
+      const danger = String(level || '').toLowerCase() === 'danger';
+      return `<span class="level-badge ${danger ? 'level-danger' : 'level-warning'}">${danger ? 'Danger' : 'Warning'}</span>`;
+    }
+
+    function statusBadge(alert) {
+      return alert.resolue
+        ? '<span class="status-pill status-resolved">Traitee</span>'
+        : '<span class="status-pill status-open">Non traitee</span>';
+    }
+
+    function filters() {
+      return {
+        session_id: document.getElementById('filter-session').value,
+        niveau: document.getElementById('filter-level').value,
+        status: document.getElementById('filter-status').value,
+        date_start: document.getElementById('filter-date-start').value,
+        date_end: document.getElementById('filter-date-end').value,
+      };
+    }
+
+    function queryString() {
+      const params = new URLSearchParams();
+      Object.entries(filters()).forEach(([key, value]) => {
+        if (value) params.set(key, value);
+      });
+      return params.toString();
+    }
+
+    function updateExportLinks() {
+      const qs = queryString();
+      const sessionId = document.getElementById('filter-session').value;
+      const csvLink = document.getElementById('csv-link');
+      const pdfLink = document.getElementById('pdf-link');
+
+      if (sessionId) {
+        csvLink.href = `/api/export/session/${sessionId}/csv`;
+        pdfLink.href = `/api/export/session/${sessionId}/pdf`;
+      } else {
+        csvLink.href = '/api/export/alerts/csv' + (qs ? '?' + qs : '');
+        pdfLink.href = '/api/export/alerts/pdf' + (qs ? '?' + qs : '');
+      }
+    }
+
+    function updateStats() {
+      const total = visibleAlerts.length;
+      const danger = visibleAlerts.filter(a => a.niveau === 'danger').length;
+      const warning = visibleAlerts.filter(a => a.niveau === 'warning').length;
+      const resolved = visibleAlerts.filter(a => a.resolue).length;
+      const open = visibleAlerts.filter(a => !a.resolue).length;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-danger').textContent = danger;
+      document.getElementById('stat-warning').textContent = warning;
+      document.getElementById('stat-resolved').textContent = resolved;
+      document.getElementById('open-count-chip').textContent = `${open} non traitees`;
+      document.getElementById('table-sub').textContent = `${total} alerte(s) affichee(s) selon les filtres actifs.`;
+      document.getElementById('last-refresh').textContent = `Maj ${new Date().toLocaleTimeString('fr-FR')}`;
+
+      const chip = document.getElementById('status-chip');
+      const title = document.getElementById('status-title');
+      const text = document.getElementById('status-text');
+      chip.className = 'status-chip';
+
+      if (danger > 0) {
+        chip.classList.add('danger');
+        chip.textContent = 'Danger';
+        title.textContent = 'Action requise';
+        text.textContent = 'Des alertes danger sont presentes dans la selection. Verifiez le parametre, la valeur lue et le seuil DB.';
+      } else if (warning > 0) {
+        chip.classList.add('warning');
+        chip.textContent = 'Warning';
+        title.textContent = 'Surveillance active';
+        text.textContent = 'Aucune alerte danger affichee, mais des warnings restent a suivre ou a traiter.';
+      } else {
+        chip.textContent = 'Stable';
+        title.textContent = 'Aucune alerte critique';
+        text.textContent = 'La selection actuelle ne contient pas d alerte danger ou warning.';
+      }
+    }
+
+    function renderAlerts() {
+      const search = document.getElementById('filter-search').value.trim().toLowerCase();
+      visibleAlerts = allAlerts.filter(a => {
+        const text = `${a.id} ${a.session_id} ${a.huile} ${a.parametre} ${a.type_alerte} ${a.message} ${a.niveau}`.toLowerCase();
+        return !search || text.includes(search);
+      });
+
+      const body = document.getElementById('alert-body');
+      if (!visibleAlerts.length) {
+        body.innerHTML = '<tr><td colspan="8"><div class="empty-state">Aucune alerte trouvee pour ces filtres.</div></td></tr>';
+        updateStats();
+        return;
+      }
+
+      body.innerHTML = visibleAlerts.map(a => {
+        const danger = a.niveau === 'danger';
+        return `
+          <tr class="${danger ? 'alert-row-danger' : 'alert-row-warning'}">
+            <td>
+              <div class="primary-cell">
+                <span class="primary-main">${fmtDate(a.timestamp)}</span>
+                <span class="primary-sub">ID alerte #${a.id}</span>
+              </div>
+            </td>
+            <td>
+              <div class="primary-cell">
+                <span class="primary-main">Reaction #${a.session_id}</span>
+                <span class="primary-sub">${a.huile || '--'} - ${a.session_statut || '--'}</span>
+              </div>
+            </td>
+            <td>${levelBadge(a.niveau)}</td>
+            <td>
+              <div class="primary-cell">
+                <span class="primary-main">${a.parametre || '--'}</span>
+                <span class="primary-sub">${a.type_alerte || '--'}</span>
+              </div>
+            </td>
+            <td class="measure-cell">
+              <div class="measure-main">${fmtNumber(a.valeur_lue)}</div>
+              <div class="measure-sub">Seuil DB: ${fmtNumber(a.valeur_seuil)}</div>
+            </td>
+            <td class="message-cell">${a.message || '--'}</td>
+            <td>${statusBadge(a)}</td>
+            <td>
+              <button class="btn btn-outline btn-small" ${a.resolue ? 'disabled' : ''} onclick="resolveAlert(${a.id})">
+                Traiter
+              </button>
+            </td>
+          </tr>`;
+      }).join('');
+      updateStats();
+    }
+
+    async function resolveAlert(id) {
+      await fetch(`/api/alerts/${id}/resolve`, { method: 'PUT' });
+      await loadAlerts();
+    }
+
+    async function resolveVisible() {
+      const open = visibleAlerts.filter(a => !a.resolue);
+      if (!open.length) return;
+      for (const alert of open) {
+        await fetch(`/api/alerts/${alert.id}/resolve`, { method: 'PUT' });
+      }
+      await loadAlerts();
+    }
+
+    function renderBatchList() {
+      const list = document.getElementById('batch-list');
+      const active = document.getElementById('filter-session').value;
+      if (!sessions.length) {
+        list.innerHTML = '<div class="empty-state">Aucune reaction trouvee.</div>';
+        return;
+      }
+
+      list.innerHTML = sessions.slice(0, 60).map(s => `
+        <button class="batch-item ${String(active) === String(s.id) ? 'active' : ''}" onclick="selectSession(${s.id})">
+          <div class="batch-title">
+            <span>Reaction #${s.id}</span>
+            <span>${s.nb_alertes}</span>
+          </div>
+          <div class="batch-meta">${s.huile || '--'}<br>${fmtDate(s.debut)} - ${s.statut || '--'}</div>
+        </button>
+      `).join('');
+    }
+
+    function selectSession(id) {
+      document.getElementById('filter-session').value = id;
+      loadAlerts();
+      renderBatchList();
+    }
+
+    async function loadSessions() {
+      const res = await fetch('/api/alerts/sessions');
+      sessions = res.ok ? await res.json() : [];
+      const select = document.getElementById('filter-session');
+      const current = select.value;
+      select.innerHTML = '<option value="">Toutes les reactions</option>' + sessions.map(s => (
+        `<option value="${s.id}">Reaction #${s.id} - ${s.huile} (${s.nb_alertes})</option>`
+      )).join('');
+      select.value = current;
+      renderBatchList();
+    }
+
+    async function loadAlerts() {
+      updateExportLinks();
+      renderBatchList();
+      const qs = queryString();
+      const res = await fetch('/api/alerts' + (qs ? '?' + qs : ''));
+      allAlerts = res.ok ? await res.json() : [];
+      renderAlerts();
+      updateExportLinks();
+    }
+
+    async function refreshAll() {
+      await loadSessions();
+      await loadAlerts();
+    }
+
+    function resetFilters() {
+      ['filter-search', 'filter-session', 'filter-level', 'filter-status', 'filter-date-start', 'filter-date-end']
+        .forEach(id => { document.getElementById(id).value = ''; });
+      loadAlerts();
+      renderBatchList();
+    }
+
+    function clearSearch() {
+      document.getElementById('filter-search').value = '';
+      renderAlerts();
+    }
+
+    refreshAll();
+    setInterval(loadAlerts, 30000);
+  </script>
+</body>
+</html>

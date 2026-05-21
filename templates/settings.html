@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parametres - HydroScan</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .page-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .page-title { font-size: 22px; margin-bottom: 6px; }
+    .page-sub { color: var(--text-muted); font-size: 13px; }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .oil-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .oil-button {
+      align-items: flex-start;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      text-align: left;
+      transition: border-color .2s, background .2s;
+    }
+    .oil-button.active,
+    .oil-button:hover {
+      background: rgba(0,212,255,.06);
+      border-color: rgba(0,212,255,.35);
+    }
+    .oil-meta {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .form-section {
+      border-top: 1px solid var(--border);
+      margin-top: 18px;
+      padding-top: 18px;
+    }
+    .section-title {
+      color: var(--accent-cyan);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .7px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    label {
+      color: var(--text-muted);
+      display: block;
+      font-size: 11px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    textarea.form-control {
+      min-height: 86px;
+      resize: vertical;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .save-state {
+      color: var(--text-muted);
+      margin-top: 12px;
+      min-height: 22px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">HydroScan</div>
+    <div class="nav-clock mono" id="clock">--:--:--</div>
+  </nav>
+
+  <nav class="sidebar">
+    <a href="/dashboard" class="nav-item">Dashboard</a>
+    <a href="/historique" class="nav-item">Huiles</a>
+    <a href="/alertes" class="nav-item">Alertes</a>
+    <a href="/settings" class="nav-item active">Parametres</a>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Parametres des huiles</h1>
+        <p class="page-sub">Modifier les seuils utilises par la simulation et les alertes.</p>
+      </div>
+      <button class="btn btn-outline" onclick="loadHuiles()">Actualiser</button>
+    </div>
+
+    <div class="settings-grid">
+      <div class="card">
+        <div class="section-title">Types d'huile</div>
+        <div class="oil-list" id="oil-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Configuration</div>
+        <form id="settings-form" onsubmit="saveHuile(event)">
+          <input type="hidden" id="huile-id">
+
+          <div class="form-grid" style="grid-template-columns: 1fr;">
+            <div>
+              <label for="nom">Nom</label>
+              <input class="form-control" id="nom" required>
+            </div>
+            <div>
+              <label for="description">Description</label>
+              <textarea class="form-control" id="description"></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Temperature (C)</div>
+            <div class="form-grid">
+              <div><label>Min</label><input class="form-control" type="number" step="0.1" id="temp-min" required></div>
+              <div><label>Opt</label><input class="form-control" type="number" step="0.1" id="temp-opt" required></div>
+              <div><label>Max</label><input class="form-control" type="number" step="0.1" id="temp-max" required></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Pression (bar)</div>
+            <div class="form-grid">
+              <div><label>Min</label><input class="form-control" type="number" step="0.01" id="pression-min" required></div>
+              <div><label>Opt</label><input class="form-control" type="number" step="0.01" id="pression-opt" required></div>
+              <div><label>Max</label><input class="form-control" type="number" step="0.01" id="pression-max" required></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Debit H2 (Nm3/h)</div>
+            <div class="form-grid">
+              <div><label>Min</label><input class="form-control" type="number" step="0.1" id="debit-min" required></div>
+              <div><label>Opt</label><input class="form-control" type="number" step="0.1" id="debit-opt" required></div>
+              <div><label>Max</label><input class="form-control" type="number" step="0.1" id="debit-max" required></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Duree (min)</div>
+            <div class="form-grid">
+              <div><label>Min</label><input class="form-control" type="number" step="1" id="duree-min" required></div>
+              <div><label>Opt</label><input class="form-control" type="number" step="1" id="duree-opt" required></div>
+              <div><label>Max</label><input class="form-control" type="number" step="1" id="duree-max" required></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Rendement (%)</div>
+            <div class="form-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+              <div><label>Min</label><input class="form-control" type="number" step="0.1" id="rendement-min" required></div>
+              <div><label>Opt</label><input class="form-control" type="number" step="0.1" id="rendement-opt" required></div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Enregistrer</button>
+            <button class="btn btn-outline" type="button" onclick="reloadSelected()">Annuler</button>
+            <button class="btn btn-outline" type="button" onclick="API.exportCSV()">Export CSV</button>
+          </div>
+          <div class="save-state" id="save-state"></div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+  <script>
+    let huiles = [];
+    let selectedId = null;
+
+    setInterval(() => {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
+    }, 1000);
+
+    function numberValue(id) {
+      return Number(document.getElementById(id).value);
+    }
+
+    function setValue(id, value) {
+      document.getElementById(id).value = value ?? '';
+    }
+
+    function validateRanges(payload) {
+      const checks = [
+        ['temperature', payload.temperature],
+        ['pression', payload.pression],
+        ['debit_h2', payload.debit_h2],
+        ['duree', payload.duree]
+      ];
+
+      for (const [name, range] of checks) {
+        if (!(range.min <= range.opt && range.opt <= range.max)) {
+          return `${name}: min <= opt <= max obligatoire`;
+        }
+      }
+      if (payload.rendement.min > payload.rendement.opt) {
+        return 'rendement: min <= opt obligatoire';
+      }
+      return '';
+    }
+
+    function renderOilList() {
+      const list = document.getElementById('oil-list');
+      list.innerHTML = huiles.map(h => `
+        <button class="oil-button ${h.id === selectedId ? 'active' : ''}" onclick="selectHuile(${h.id})">
+          <strong>${h.nom}</strong>
+          <span class="oil-meta">${h.temperature.opt} C | ${h.pression.opt} bar | ${h.debit_h2.opt} Nm3/h</span>
+        </button>
+      `).join('');
+    }
+
+    async function selectHuile(id) {
+      selectedId = id;
+      renderOilList();
+      const h = await API.getHuile(id);
+      if (!h) return;
+
+      setValue('huile-id', h.id);
+      setValue('nom', h.nom);
+      setValue('description', h.description);
+      setValue('temp-min', h.temperature.min);
+      setValue('temp-opt', h.temperature.opt);
+      setValue('temp-max', h.temperature.max);
+      setValue('pression-min', h.pression.min);
+      setValue('pression-opt', h.pression.opt);
+      setValue('pression-max', h.pression.max);
+      setValue('debit-min', h.debit_h2.min);
+      setValue('debit-opt', h.debit_h2.opt);
+      setValue('debit-max', h.debit_h2.max);
+      setValue('duree-min', h.duree.min);
+      setValue('duree-opt', h.duree.opt);
+      setValue('duree-max', h.duree.max);
+      setValue('rendement-min', h.rendement.min);
+      setValue('rendement-opt', h.rendement.opt);
+      document.getElementById('save-state').textContent = '';
+    }
+
+    function buildPayload() {
+      return {
+        nom: document.getElementById('nom').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        temperature: { min: numberValue('temp-min'), opt: numberValue('temp-opt'), max: numberValue('temp-max') },
+        pression: { min: numberValue('pression-min'), opt: numberValue('pression-opt'), max: numberValue('pression-max') },
+        debit_h2: { min: numberValue('debit-min'), opt: numberValue('debit-opt'), max: numberValue('debit-max') },
+        duree: { min: numberValue('duree-min'), opt: numberValue('duree-opt'), max: numberValue('duree-max') },
+        rendement: { min: numberValue('rendement-min'), opt: numberValue('rendement-opt') }
+      };
+    }
+
+    async function saveHuile(event) {
+      event.preventDefault();
+      const state = document.getElementById('save-state');
+      const id = Number(document.getElementById('huile-id').value);
+      const payload = buildPayload();
+      const error = validateRanges(payload);
+
+      if (error) {
+        state.style.color = 'var(--accent-danger)';
+        state.textContent = error;
+        return;
+      }
+
+      const ok = await API.updateHuile(id, payload);
+      state.style.color = ok ? 'var(--accent-green)' : 'var(--accent-danger)';
+      state.textContent = ok ? 'Parametres enregistres dans la base de donnees.' : 'Erreur pendant l enregistrement.';
+      if (ok) await loadHuiles(id);
+    }
+
+    async function reloadSelected() {
+      if (selectedId) await selectHuile(selectedId);
+    }
+
+    async function loadHuiles(preferredId = null) {
+      huiles = await API.getHuiles();
+      selectedId = preferredId || selectedId || (huiles[0] && huiles[0].id);
+      renderOilList();
+      if (selectedId) await selectHuile(selectedId);
+    }
+
+    loadHuiles();
+  </script>
+</body>
+</html>

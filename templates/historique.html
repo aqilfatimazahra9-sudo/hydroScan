@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catalogue des huiles - HydroScan</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .page-toolbar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      color: var(--accent-cyan);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .page-title {
+      font-size: 26px;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .page-sub {
+      color: var(--text-muted);
+      max-width: 760px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .oil-select {
+      min-width: 260px;
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: var(--text-primary);
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .summary-card {
+      min-height: 112px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .summary-label,
+    .section-label,
+    .metric-label {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.15;
+      margin-top: 10px;
+    }
+
+    .summary-note {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .catalog-layout {
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .oil-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .oil-item {
+      width: 100%;
+      text-align: left;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: var(--text-primary);
+      padding: 14px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .oil-item:hover,
+    .oil-item.active {
+      border-color: rgba(0,212,255,0.45);
+      background: rgba(0,212,255,0.08);
+    }
+
+    .oil-item-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    .oil-item-meta {
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .detail-title {
+      font-size: 24px;
+      margin: 6px 0;
+    }
+
+    .detail-description {
+      color: var(--text-muted);
+      line-height: 1.75;
+      max-width: 760px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(0,230,118,0.28);
+      background: rgba(0,230,118,0.1);
+      color: var(--accent-green);
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .status-pill::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-green);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .metric-card {
+      padding: 18px;
+    }
+
+    .metric-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .metric-main {
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .range-track {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,179,0,.35), rgba(0,230,118,.75), rgba(255,77,77,.45));
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .range-track::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: -4px;
+      width: 2px;
+      height: 18px;
+      background: #fff;
+      opacity: .65;
+    }
+
+    .range-values {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .range-values span:nth-child(2) {
+      color: var(--accent-green);
+      text-align: center;
+    }
+
+    .range-values span:nth-child(3) {
+      text-align: right;
+    }
+
+    .threshold-table-wrap {
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+
+    .threshold-table td:first-child {
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+    }
+
+    .role-text {
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif !important;
+      min-width: 220px;
+    }
+
+    .empty-state {
+      color: var(--text-muted);
+      padding: 28px;
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .catalog-layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .page-toolbar,
+      .detail-head { align-items: stretch; flex-direction: column; }
+      .toolbar-actions { justify-content: stretch; }
+      .oil-select,
+      .toolbar-actions .btn { width: 100%; justify-content: center; }
+      .summary-grid,
+      .detail-grid { grid-template-columns: 1fr; }
+      .main-content { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">HydroScan</div>
+    <div class="nav-clock mono" id="clock">--:--:--</div>
+  </nav>
+
+  <nav class="sidebar">
+    <a href="/dashboard" class="nav-item">Dashboard</a>
+    <a href="/historique" class="nav-item active">Historique</a>
+    <a href="/alertes" class="nav-item">Alertes</a>
+    <a href="/settings" class="nav-item">Parametres</a>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-toolbar">
+      <div>
+        <div class="eyebrow">Base de donnees des huiles</div>
+        <h1 class="page-title">Catalogue technique des huiles</h1>
+        <p class="page-sub">Cette page affiche uniquement les informations stockees dans la base de donnees. Ces seuils servent de reference pour les nouveaux lots de monitoring.</p>
+      </div>
+      <div class="toolbar-actions">
+        <select class="oil-select" id="huile-select" onchange="selectHuile(this.value)">
+          <option value="">Chargement...</option>
+        </select>
+        <button class="btn btn-outline" onclick="loadHuiles()">Actualiser</button>
+        <a class="btn btn-primary" href="/settings">Modifier</a>
+      </div>
+    </div>
+
+    <section class="summary-grid">
+      <div class="card summary-card">
+        <div class="summary-label">Huile active</div>
+        <div>
+          <div class="summary-value" id="summary-name">--</div>
+          <div class="summary-note">selection catalogue</div>
+        </div>
+      </div>
+      <div class="card summary-card">
+        <div class="summary-label">Temperature opt.</div>
+        <div>
+          <div class="summary-value" id="summary-temp">--</div>
+          <div class="summary-note">point de consigne</div>
+        </div>
+      </div>
+      <div class="card summary-card">
+        <div class="summary-label">Pression opt.</div>
+        <div>
+          <div class="summary-value" id="summary-pressure">--</div>
+          <div class="summary-note">condition process</div>
+        </div>
+      </div>
+      <div class="card summary-card">
+        <div class="summary-label">Rendement cible</div>
+        <div>
+          <div class="summary-value" id="summary-yield">--</div>
+          <div class="summary-note">objectif qualite</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="catalog-layout">
+      <aside class="card">
+        <div class="section-label">Huiles disponibles</div>
+        <div class="oil-list" id="oil-list">
+          <div class="empty-state">Chargement du catalogue...</div>
+        </div>
+      </aside>
+
+      <section class="card" id="detail-panel">
+        <div class="empty-state">Selectionnez une huile pour afficher sa fiche technique.</div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = '/api';
+    let huiles = [];
+    let currentHuile = null;
+
+    const clock = document.getElementById('clock');
+    function updateClock() {
+      clock.textContent = new Date().toLocaleTimeString('fr-FR');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    function fmt(value, unit = '') {
+      if (value === null || value === undefined || value === '') return '--';
+      return `${Number(value).toLocaleString('fr-FR')}${unit}`;
+    }
+
+    function shortText(text) {
+      if (!text) return 'Aucune description';
+      return text.length > 84 ? `${text.slice(0, 84)}...` : text;
+    }
+
+    function getRange(h, key) {
+      const range = h[key] || {};
+      return {
+        min: range.min,
+        opt: range.opt,
+        max: range.max
+      };
+    }
+
+    function rangeMetric(title, range, unit) {
+      return `
+        <article class="card metric-card">
+          <div class="metric-top">
+            <div class="metric-label">${title}</div>
+            <div class="metric-main">${fmt(range.opt, unit)}</div>
+          </div>
+          <div class="range-track" aria-hidden="true"></div>
+          <div class="range-values">
+            <span>Min ${fmt(range.min, unit)}</span>
+            <span>Opt ${fmt(range.opt, unit)}</span>
+            <span>Max ${fmt(range.max, unit)}</span>
+          </div>
+        </article>
+      `;
+    }
+
+    function tableRow(name, range, unit, role) {
+      return `
+        <tr>
+          <td>${name}</td>
+          <td>${fmt(range.min, unit)}</td>
+          <td>${fmt(range.opt, unit)}</td>
+          <td>${fmt(range.max, unit)}</td>
+          <td class="role-text">${role}</td>
+        </tr>
+      `;
+    }
+
+    function renderOilList() {
+      const list = document.getElementById('oil-list');
+      if (!huiles.length) {
+        list.innerHTML = '<div class="empty-state">Aucune huile trouvee dans la base.</div>';
+        return;
+      }
+
+      list.innerHTML = huiles.map(h => `
+        <button class="oil-item ${currentHuile && String(currentHuile.id) === String(h.id) ? 'active' : ''}" onclick="selectHuile(${h.id})">
+          <div class="oil-item-title">
+            <span>${h.nom}</span>
+            <span class="badge-info">DB</span>
+          </div>
+          <div class="oil-item-meta">
+            <span>${fmt(h.temp_opt, ' C')}</span>
+            <span>${fmt(h.pression_opt, ' bar')}</span>
+            <span>${fmt(h.rendement_opt, ' %')}</span>
+          </div>
+        </button>
+      `).join('');
+    }
+
+    function renderSummary(h) {
+      document.getElementById('summary-name').textContent = h ? h.nom : '--';
+      document.getElementById('summary-temp').textContent = h ? fmt(h.temperature.opt, ' C') : '--';
+      document.getElementById('summary-pressure').textContent = h ? fmt(h.pression.opt, ' bar') : '--';
+      document.getElementById('summary-yield').textContent = h ? fmt(h.rendement.opt, ' %') : '--';
+    }
+
+    function renderDetails(h) {
+      const temp = getRange(h, 'temperature');
+      const pression = getRange(h, 'pression');
+      const debit = getRange(h, 'debit_h2');
+      const duree = getRange(h, 'duree');
+      const rendement = getRange(h, 'rendement');
+
+      document.getElementById('detail-panel').innerHTML = `
+        <div class="detail-head">
+          <div>
+            <div class="section-label">Fiche technique</div>
+            <h2 class="detail-title">${h.nom}</h2>
+            <p class="detail-description">${h.description || 'Aucune description enregistree pour cette huile.'}</p>
+          </div>
+          <div class="status-pill">Source database</div>
+        </div>
+
+        <div class="detail-grid">
+          ${rangeMetric('Temperature', temp, ' C')}
+          ${rangeMetric('Pression', pression, ' bar')}
+          ${rangeMetric('Debit H2', debit, ' Nm3/h')}
+          ${rangeMetric('Duree reaction', duree, ' min')}
+        </div>
+
+        <div class="card metric-card" style="margin-bottom:18px;">
+          <div class="metric-top">
+            <div class="metric-label">Rendement</div>
+            <div class="metric-main">${fmt(rendement.opt, ' %')}</div>
+          </div>
+          <div class="range-track" aria-hidden="true"></div>
+          <div class="range-values">
+            <span>Min ${fmt(rendement.min, ' %')}</span>
+            <span>Opt ${fmt(rendement.opt, ' %')}</span>
+            <span>Objectif qualite</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Fenetre operatoire</div>
+          <div class="threshold-table-wrap">
+            <table class="table-custom threshold-table">
+              <thead>
+                <tr>
+                  <th>Parametre</th>
+                  <th>Min</th>
+                  <th>Optimal</th>
+                  <th>Max</th>
+                  <th>Utilisation</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRow('Temperature', temp, ' C', 'Si elle depasse le max pendant le monitoring, le systeme arrete le lot.')}
+                ${tableRow('Pression', pression, ' bar', 'Controle la securite et la stabilite du reacteur.')}
+                ${tableRow('Debit H2', debit, ' Nm3/h', 'Controle l alimentation en hydrogene pendant la reaction.')}
+                ${tableRow('Duree', duree, ' min', 'Temps de reference pour conduire le lot.')}
+                ${tableRow('Rendement', rendement, ' %', 'Objectif de conversion/qualite du produit final.')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    async function selectHuile(id) {
+      if (!id) return;
+      const select = document.getElementById('huile-select');
+      select.value = String(id);
+      document.getElementById('detail-panel').innerHTML = '<div class="empty-state">Chargement de la fiche technique...</div>';
+
+      const res = await fetch(`${API_BASE}/huiles/${id}`);
+      if (!res.ok) {
+        document.getElementById('detail-panel').innerHTML = '<div class="empty-state">Impossible de charger cette huile.</div>';
+        return;
+      }
+
+      currentHuile = await res.json();
+      renderSummary(currentHuile);
+      renderOilList();
+      renderDetails(currentHuile);
+    }
+
+    async function loadHuiles() {
+      const select = document.getElementById('huile-select');
+      const list = document.getElementById('oil-list');
+      select.innerHTML = '<option value="">Chargement...</option>';
+      list.innerHTML = '<div class="empty-state">Chargement du catalogue...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/huiles`);
+        huiles = res.ok ? await res.json() : [];
+      } catch (error) {
+        huiles = [];
+      }
+
+      if (!huiles.length) {
+        select.innerHTML = '<option value="">Aucune huile</option>';
+        renderOilList();
+        renderSummary(null);
+        document.getElementById('detail-panel').innerHTML = '<div class="empty-state">Aucune huile trouvee dans la base.</div>';
+        return;
+      }
+
+      select.innerHTML = huiles.map(h => `<option value="${h.id}">${h.nom}</option>`).join('');
+      renderOilList();
+      await selectHuile(huiles[0].id);
+    }
+
+    loadHuiles();
+  </script>
+</body>
+</html>

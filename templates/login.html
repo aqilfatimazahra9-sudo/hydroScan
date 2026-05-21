@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - HydroScan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #171a1d;
+      --panel: #202428;
+      --panel-2: #171b1f;
+      --cyan: #00d4ff;
+      --green: #00e676;
+      --amber: #ffb300;
+      --red: #ff4d4d;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --border: rgba(255,255,255,.1);
+      --shadow: 0 24px 80px rgba(0,0,0,.42);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(120deg, rgba(0,212,255,.08), transparent 34%),
+        linear-gradient(250deg, rgba(255,179,0,.05), transparent 30%),
+        var(--bg);
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: radial-gradient(circle at center, black 0, transparent 78%);
+      pointer-events: none;
+    }
+
+    .screen {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(460px, 1fr) minmax(420px, 520px);
+      align-items: stretch;
+    }
+
+    .intro {
+      padding: 56px clamp(34px, 6vw, 86px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 100vh;
+    }
+
+    .brand-line {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      color: var(--cyan);
+      font-weight: 700;
+      letter-spacing: .4px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(0,212,255,.08);
+      border: 1px solid rgba(0,212,255,.3);
+    }
+
+    .intro-main {
+      max-width: 680px;
+    }
+
+    .eyebrow {
+      color: var(--cyan);
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 1.6px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: clamp(38px, 5vw, 64px);
+      line-height: 1.03;
+      letter-spacing: 0;
+      margin-bottom: 20px;
+    }
+
+    .intro-copy {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+      max-width: 560px;
+    }
+
+    .process-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 34px;
+      max-width: 760px;
+    }
+
+    .process-step {
+      background: rgba(32,36,40,.76);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 112px;
+    }
+
+    .step-num {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--cyan);
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .step-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .step-text {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .footer-meta {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .login-side {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background: rgba(18,21,24,.62);
+      border-left: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(14px);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 30px;
+      animation: rise .45s ease both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-head {
+      margin-bottom: 24px;
+    }
+
+    .card-kicker {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .card-sub {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .msg {
+      display: none;
+      border-radius: 8px;
+      padding: 11px 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+
+    .msg.show { display: block; }
+    .msg.error { color: var(--red); background: rgba(255,77,77,.1); border: 1px solid rgba(255,77,77,.3); }
+    .msg.warn { color: var(--amber); background: rgba(255,179,0,.1); border: 1px solid rgba(255,179,0,.28); }
+    .msg.ok { color: var(--green); background: rgba(0,230,118,.1); border: 1px solid rgba(0,230,118,.25); }
+
+    .field {
+      margin-bottom: 17px;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .9px;
+      margin-bottom: 8px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    input {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid rgba(255,255,255,.1);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 13px 44px 13px 13px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+
+    input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0,212,255,.11);
+      background: #15191d;
+    }
+
+    input.invalid {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(255,77,77,.08);
+    }
+
+    .input-mark {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    .eye {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      width: 34px;
+      height: 34px;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    .eye:hover {
+      color: var(--text);
+      background: rgba(255,255,255,.05);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 7px;
+      min-height: 17px;
+    }
+
+    .hint.good { color: var(--green); }
+    .hint.bad { color: var(--red); }
+
+    .btn-login {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 0;
+      border-radius: 8px;
+      padding: 13px 16px;
+      color: #081014;
+      background: var(--cyan);
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .2s, background .2s;
+      margin-top: 4px;
+    }
+
+    .btn-login:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(0,212,255,.25);
+      background: #26dcff;
+    }
+
+    .btn-login:disabled {
+      opacity: .68;
+      cursor: progress;
+    }
+
+    .loader {
+      display: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 2px solid rgba(8,16,20,.24);
+      border-top-color: #081014;
+      animation: spin .7s linear infinite;
+    }
+
+    .btn-login.loading .loader { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .login-note {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .login-note strong { color: var(--text); }
+
+
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 9px;
+      padding: 5px;
+      margin-bottom: 18px;
+    }
+
+    .mode-tab {
+      border: 0;
+      border-radius: 7px;
+      padding: 9px 10px;
+      color: var(--muted);
+      background: transparent;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+
+    .mode-tab.active {
+      background: rgba(0,212,255,.14);
+      color: var(--cyan);
+    }
+
+    .hidden { display: none !important; }
+
+    select {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid rgba(255,255,255,.1);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 13px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    select:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0,212,255,.11);
+    }
+
+    @media (max-width: 920px) {
+      body { overflow: auto; }
+      .screen { grid-template-columns: 1fr; }
+      .intro { min-height: auto; padding: 34px 24px 12px; }
+      .process-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .footer-meta { display: none; }
+      .login-side { border-left: 0; padding: 22px; }
+    }
+
+    @media (max-width: 560px) {
+      .process-strip { display: none; }
+      .login-card { padding: 24px; }
+      .intro-main h1 { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <section class="intro">
+      <div class="brand-line">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="24" height="26" viewBox="0 0 24 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="2" width="12" height="16" rx="3" stroke="#00d4ff" stroke-width="1.4"/>
+            <circle cx="12" cy="10" r="3" stroke="#00d4ff" stroke-width="1.3"/>
+            <path d="M8 20h8v4H8z" stroke="#ffb300" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <span>HydroScan</span>
+      </div>
+
+      <div class="intro-main">
+        <div class="eyebrow">Surveillance industrielle</div>
+        <h1>Connexion securisee au monitoring d'hydrogenation.</h1>
+        <p class="intro-copy">Accedez au tableau de bord, lancez le suivi des lots, consultez les alertes et exploitez les parametres issus de la base de donnees.</p>
+
+        <div class="process-strip" aria-label="Fonctions principales">
+          <div class="process-step">
+            <div class="step-num">01</div>
+            <div class="step-title">Dashboard</div>
+            <div class="step-text">Suivi temps reel des mesures du reacteur.</div>
+          </div>
+          <div class="process-step">
+            <div class="step-num">02</div>
+            <div class="step-title">Huiles</div>
+            <div class="step-text">Seuils techniques lus depuis la base.</div>
+          </div>
+          <div class="process-step">
+            <div class="step-num">03</div>
+            <div class="step-title">Alertes</div>
+            <div class="step-text">Detection et export des incidents process.</div>
+          </div>
+          <div class="process-step">
+            <div class="step-num">04</div>
+            <div class="step-title">Rapports</div>
+            <div class="step-text">CSV et PDF pour chaque reaction.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-meta">
+        <span>SQL Server connected</span>
+        <span>Flask API /api/login</span>
+        <span id="clock">--:--:--</span>
+      </div>
+    </section>
+
+    <section class="login-side">
+      <div class="login-card" id="login-card">
+        <div class="card-head">
+          <div class="card-kicker">Espace operateur</div>
+          <div class="card-title" id="card-title">Se connecter</div>
+          <p class="card-sub" id="card-sub">Utilisez votre email enregistre dans la base de donnees et votre mot de passe.</p>
+        </div>
+
+        <div class="mode-tabs" aria-label="Mode d'acces">
+          <button class="mode-tab active" type="button" id="login-tab">Connexion</button>
+          <button class="mode-tab" type="button" id="register-tab">Creer un compte</button>
+        </div>
+
+        <div class="msg" id="message"></div>
+
+        <form id="login-form" novalidate>
+          <div class="field hidden" id="name-field">
+            <label for="full-name">Nom complet</label>
+            <div class="input-wrap">
+              <input id="full-name" name="nom" type="text" placeholder="Votre nom" autocomplete="name">
+              <span class="input-mark">ID</span>
+            </div>
+            <div class="hint" id="name-hint">Nom affiche dans l'application.</div>
+          </div>
+
+          <div class="field">
+            <label for="email">Adresse email</label>
+            <div class="input-wrap">
+              <input id="email" name="email" type="email" placeholder="exemple@factory.ma" autocomplete="email" required>
+              <span class="input-mark">@</span>
+            </div>
+            <div class="hint" id="email-hint">Email de votre compte utilisateur.</div>
+          </div>
+
+          <div class="field">
+            <label for="password">Mot de passe</label>
+            <div class="input-wrap">
+              <input id="password" name="password" type="password" placeholder="Mot de passe" autocomplete="current-password" required>
+              <button class="eye" type="button" id="toggle-password" aria-label="Afficher le mot de passe">*</button>
+            </div>
+            <div class="hint" id="password-hint">Minimum 4 caracteres pour ce projet.</div>
+          </div>
+
+          <div class="field hidden" id="role-field">
+            <label for="role">Role</label>
+            <select id="role" name="role">
+              <option value="operator">Operateur</option>
+              <option value="admin">Administrateur</option>
+            </select>
+            <div class="hint">Pour la presentation, vous pouvez creer un compte operateur.</div>
+          </div>
+
+          <button class="btn-login" id="login-btn" type="submit">
+            <span class="loader" aria-hidden="true"></span>
+            <span id="btn-text">Entrer dans HydroScan</span>
+          </button>
+        </form>
+
+        <div class="login-note" id="login-note">
+          <strong>Connexion :</strong> entrez un email existant dans la table <strong>users</strong>. Pour ajouter un nouvel utilisateur, cliquez sur <strong>Creer un compte</strong>.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const nameInput = document.getElementById('full-name');
+    const roleInput = document.getElementById('role');
+    const emailHint = document.getElementById('email-hint');
+    const passwordHint = document.getElementById('password-hint');
+    const nameHint = document.getElementById('name-hint');
+    const message = document.getElementById('message');
+    const btn = document.getElementById('login-btn');
+    const btnText = document.getElementById('btn-text');
+    const clock = document.getElementById('clock');
+    const loginTab = document.getElementById('login-tab');
+    const registerTab = document.getElementById('register-tab');
+    const nameField = document.getElementById('name-field');
+    const roleField = document.getElementById('role-field');
+    const cardTitle = document.getElementById('card-title');
+    const cardSub = document.getElementById('card-sub');
+    const loginNote = document.getElementById('login-note');
+    let mode = 'login';
+
+    function tick() {
+      if (clock) clock.textContent = new Date().toLocaleTimeString('fr-FR');
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    function setMessage(type, text) {
+      message.className = `msg ${type} show`;
+      message.textContent = text;
+    }
+
+    function clearMessage() {
+      message.className = 'msg';
+      message.textContent = '';
+    }
+
+    function validEmail(value) {
+      return /^\S+@\S+\.\S+$/.test(value);
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      clearMessage();
+      form.reset();
+      [emailInput, passwordInput, nameInput].forEach(el => el.classList.remove('invalid'));
+      emailHint.className = 'hint';
+      emailHint.textContent = 'Email de votre compte utilisateur.';
+      passwordHint.className = 'hint';
+      passwordHint.textContent = 'Minimum 4 caracteres pour ce projet.';
+      nameHint.className = 'hint';
+      nameHint.textContent = 'Nom affiche dans l\'application.';
+
+      const isRegister = mode === 'register';
+      loginTab.classList.toggle('active', !isRegister);
+      registerTab.classList.toggle('active', isRegister);
+      nameField.classList.toggle('hidden', !isRegister);
+      roleField.classList.toggle('hidden', !isRegister);
+
+      cardTitle.textContent = isRegister ? 'Creer un compte' : 'Se connecter';
+      cardSub.textContent = isRegister
+        ? 'Ajoutez un nouvel utilisateur dans la base de donnees, puis connectez-vous.'
+        : 'Utilisez votre email enregistre dans la base de donnees et votre mot de passe.';
+      btnText.textContent = isRegister ? 'Creer le compte' : 'Entrer dans HydroScan';
+      loginNote.innerHTML = isRegister
+        ? '<strong>Creation :</strong> le compte sera ajoute dans la table <strong>users</strong>. Si l\'email existe deja, le systeme refuse la creation.'
+        : '<strong>Connexion :</strong> entrez un email existant dans la table <strong>users</strong>. Pour ajouter un nouvel utilisateur, cliquez sur <strong>Creer un compte</strong>.';
+    }
+
+    loginTab.addEventListener('click', () => setMode('login'));
+    registerTab.addEventListener('click', () => setMode('register'));
+
+    emailInput.addEventListener('input', () => {
+      emailInput.classList.remove('invalid');
+      if (!emailInput.value.trim()) {
+        emailHint.className = 'hint';
+        emailHint.textContent = 'Email de votre compte utilisateur.';
+      } else if (!validEmail(emailInput.value.trim())) {
+        emailHint.className = 'hint bad';
+        emailHint.textContent = 'Format email non valide.';
+      } else {
+        emailHint.className = 'hint good';
+        emailHint.textContent = 'Format email valide.';
+      }
+    });
+
+    nameInput.addEventListener('input', () => {
+      nameInput.classList.remove('invalid');
+      if (!nameInput.value.trim()) {
+        nameHint.className = 'hint';
+        nameHint.textContent = 'Nom affiche dans l\'application.';
+      } else if (nameInput.value.trim().length < 2) {
+        nameHint.className = 'hint bad';
+        nameHint.textContent = 'Nom trop court.';
+      } else {
+        nameHint.className = 'hint good';
+        nameHint.textContent = 'Nom valide.';
+      }
+    });
+
+    passwordInput.addEventListener('input', () => {
+      passwordInput.classList.remove('invalid');
+      if (!passwordInput.value) {
+        passwordHint.className = 'hint';
+        passwordHint.textContent = 'Minimum 4 caracteres pour ce projet.';
+      } else if (passwordInput.value.length < 4) {
+        passwordHint.className = 'hint bad';
+        passwordHint.textContent = 'Mot de passe trop court.';
+      } else {
+        passwordHint.className = 'hint good';
+        passwordHint.textContent = 'Mot de passe saisi.';
+      }
+    });
+
+    document.getElementById('toggle-password').addEventListener('click', () => {
+      passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+    });
+
+    function setLoading(isLoading) {
+      btn.disabled = isLoading;
+      btn.classList.toggle('loading', isLoading);
+      if (isLoading) btnText.textContent = mode === 'register' ? 'Creation...' : 'Verification...';
+      if (!isLoading) btnText.textContent = mode === 'register' ? 'Creer le compte' : 'Entrer dans HydroScan';
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearMessage();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      const nom = nameInput.value.trim();
+      let ok = true;
+
+      if (mode === 'register' && nom.length < 2) {
+        nameInput.classList.add('invalid');
+        nameHint.className = 'hint bad';
+        nameHint.textContent = 'Veuillez entrer le nom complet.';
+        ok = false;
+      }
+
+      if (!validEmail(email)) {
+        emailInput.classList.add('invalid');
+        emailHint.className = 'hint bad';
+        emailHint.textContent = 'Veuillez entrer un email valide.';
+        ok = false;
+      }
+
+      if (!password || password.length < 4) {
+        passwordInput.classList.add('invalid');
+        passwordHint.className = 'hint bad';
+        passwordHint.textContent = 'Veuillez entrer un mot de passe valide.';
+        ok = false;
+      }
+
+      if (!ok) return;
+
+      setLoading(true);
+
+      try {
+        const url = mode === 'register' ? '/api/register' : '/api/login';
+        const payload = mode === 'register'
+          ? { nom, email, password, role: roleInput.value }
+          : { email, password };
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (res.ok && mode === 'register') {
+          const savedEmail = email;
+          setMode('login');
+          emailInput.value = savedEmail;
+          emailInput.dispatchEvent(new Event('input'));
+          setMessage('ok', 'Compte cree avec succes. Entrez le mot de passe pour vous connecter.');
+          passwordInput.focus();
+          return;
+        }
+
+        if (res.ok && mode === 'login') {
+          localStorage.setItem('user_id', data.user_id);
+          localStorage.setItem('user_nom', data.nom);
+          localStorage.setItem('user_email', data.email);
+          localStorage.setItem('user_role', data.role);
+          setMessage('ok', `Connexion reussie. Bienvenue ${data.nom}.`);
+          btnText.textContent = 'Connecte';
+          setTimeout(() => { window.location.href = '/dashboard'; }, 700);
+          return;
+        }
+
+        setMessage('error', data.error || 'Operation refusee. Verifiez les informations.');
+        setLoading(false);
+      } catch (error) {
+        setMessage('warn', 'Serveur inaccessible. Verifiez que Flask est demarre.');
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>
